@@ -12,9 +12,10 @@ _SENTINEL = object()
 
 
 class BoobooClient:
-    def __init__(self, dsn, endpoint):
+    def __init__(self, dsn, endpoint, environment=""):
         self.dsn = dsn
         self.endpoint = endpoint
+        self.environment = environment
         self._orig_excepthook = None
         self._queue = queue.Queue(maxsize=100)
         self._worker = None
@@ -219,6 +220,7 @@ class BoobooClient:
             "exceptions": exceptions,
             "context": context,
             "tags": {"runtime": "python"},
+            "environment": self.environment,
         }
         if request_data:
             payload["request"] = request_data

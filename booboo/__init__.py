@@ -1,18 +1,19 @@
 from ._client import BoobooClient
 
-__version__ = "0.8.0"
+__version__ = "0.9.0"
 
 _client = None
 
 
-def init(dsn, endpoint="https://api.booboo.dev/ingest/", app=None):
+def init(dsn, endpoint="https://api.booboo.dev/ingest/", app=None, environment=""):
     """Initialize booboo error tracking.
 
     Always hooks sys.excepthook. Auto-detects Django, Flask, and FastAPI.
     Pass app= to explicitly register with a specific app instance.
+    Pass environment= to tag all events with an environment (e.g. "production").
     """
     global _client
-    _client = BoobooClient(dsn, endpoint)
+    _client = BoobooClient(dsn, endpoint, environment=environment)
     _client.install(app)
 
 

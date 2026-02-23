@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.0 (2026-02-23)
+
+### Features
+
+- **Environment support**: `booboo.init()` now accepts an `environment` parameter (e.g. `"production"`, `"staging"`). The value is attached to every event and can be used to filter issues in the dashboard.
+
 ## 0.8.0 (2026-02-22)
 
 ### Fixed
