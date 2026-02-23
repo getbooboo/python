@@ -67,7 +67,10 @@ def _extract_asgi_request(scope):
     try:
         headers = {}
         for key, value in scope.get("headers", []):
-            headers[key.decode("latin-1")] = value.decode("latin-1")
+            try:
+                headers[key.decode("latin-1")] = value.decode("latin-1")
+            except Exception:
+                continue
         headers = scrub_headers(headers)
 
         server = scope.get("server", ("localhost", 80))

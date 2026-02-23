@@ -31,6 +31,8 @@ def scrub_vars(local_vars):
     """Filter f_locals: skip dunders, redact sensitive keys, repr+truncate values."""
     result = {}
     for key, value in local_vars.items():
+        if len(result) >= 50:
+            break
         if key.startswith("__") and key.endswith("__"):
             continue
         if SENSITIVE_PATTERN.search(key):

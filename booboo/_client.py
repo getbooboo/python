@@ -1,10 +1,14 @@
 import atexit
+import json
 import platform
+import queue
 import sys
 import threading
 import requests
 from ._stacktrace import extract_frames, extract_exception_chain
 from ._scrubber import scrub_headers
+
+_SENTINEL = object()
 
 
 class BoobooClient:
@@ -12,7 +16,9 @@ class BoobooClient:
         self.dsn = dsn
         self.endpoint = endpoint
         self._orig_excepthook = None
-        self._pending = []
+        self._queue = queue.Queue(maxsize=100)
+        self._worker = None
+        self._worker_started = False
         self._lock = threading.Lock()
         self._user = None
         atexit.register(self._flush)
@@ -134,6 +140,35 @@ class BoobooClient:
 
         cls.__init__ = _patched_init
 
+    def _ensure_worker(self):
+        """Lazily start the background worker thread. Returns False if thread creation fails."""
+        if self._worker_started:
+            return True
+        with self._lock:
+            if self._worker_started:
+                return True
+            try:
+                self._worker = threading.Thread(target=self._worker_loop, daemon=True)
+                self._worker.start()
+                self._worker_started = True
+                return True
+            except RuntimeError:
+                return False
+
+    def _worker_loop(self):
+        """Background thread: drain queue, send events, exit on sentinel."""
+        while True:
+            try:
+                item = self._queue.get()
+                try:
+                    if item is _SENTINEL:
+                        return
+                    self._do_send(item)
+                finally:
+                    self._queue.task_done()
+            except Exception:
+                pass
+
     def _excepthook(self, exc_type, exc_value, exc_tb):
         self._capture_and_send(exc_value)
         if self._orig_excepthook:
@@ -188,24 +223,36 @@ class BoobooClient:
         if request_data:
             payload["request"] = request_data
 
-        t = threading.Thread(target=self._do_send, args=(payload,))
-        with self._lock:
-            self._pending.append(t)
-        t.start()
+        try:
+            if self._ensure_worker():
+                try:
+                    self._queue.put_nowait(payload)
+                except queue.Full:
+                    pass
+            else:
+                self._do_send(payload)  # sync fallback
+        except Exception:
+            pass
 
     def _flush(self):
-        """Wait for all pending sends to complete (called at exit)."""
-        with self._lock:
-            threads = list(self._pending)
-        for t in threads:
-            t.join(timeout=5)
+        """Wait for background worker to drain (called at exit)."""
+        try:
+            if not self._worker_started:
+                return
+            self._queue.put_nowait(_SENTINEL)
+            self._worker.join(timeout=5)
+        except Exception:
+            pass
 
     def _do_send(self, payload):
         try:
+            data = json.dumps(payload).encode("utf-8")
+            if len(data) > 102_400:
+                return  # too large, drop silently
             requests.post(
                 self.endpoint,
-                json=payload,
-                headers={"X-Booboo-DSN": self.dsn},
+                data=data,
+                headers={"X-Booboo-DSN": self.dsn, "Content-Type": "application/json"},
                 timeout=5,
             )
         except Exception:
