@@ -145,7 +145,7 @@ def test_capture_and_send_no_user(client):
 # --- _do_send ---
 
 
-@patch("booboo._client.requests.post")
+@patch("requests.post")
 def test_do_send_correct_headers(mock_post, client):
     payload = {"message": "test", "level": "error"}
     client._do_send(payload)
@@ -159,14 +159,14 @@ def test_do_send_correct_headers(mock_post, client):
     assert json.loads(call_kwargs.kwargs["data"]) == payload
 
 
-@patch("booboo._client.requests.post")
+@patch("requests.post")
 def test_do_send_drops_oversized(mock_post, client):
     payload = {"message": "x" * 200_000}
     client._do_send(payload)
     mock_post.assert_not_called()
 
 
-@patch("booboo._client.requests.post", side_effect=ConnectionError("fail"))
+@patch("requests.post", side_effect=ConnectionError("fail"))
 def test_do_send_swallows_errors(mock_post, client):
     # Should not raise
     client._do_send({"message": "test"})
