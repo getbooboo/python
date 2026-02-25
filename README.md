@@ -1,5 +1,6 @@
 # booboo-sdk
 
+[![CI](https://github.com/getbooboo/python/actions/workflows/ci.yml/badge.svg)](https://github.com/getbooboo/python/actions/workflows/ci.yml)
 [![PyPI version](https://img.shields.io/pypi/v/booboo-sdk.svg)](https://pypi.org/project/booboo-sdk/)
 [![Python versions](https://img.shields.io/pypi/pyversions/booboo-sdk.svg)](https://pypi.org/project/booboo-sdk/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
