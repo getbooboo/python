@@ -1,4 +1,5 @@
 import booboo
+
 from ._scrubber import scrub_headers
 
 
@@ -15,7 +16,9 @@ def _patch_django_exception_handler():
             if booboo._client:
                 try:
                     request_data, user_data = _extract_django_request(request)
-                    booboo._client._capture_and_send(exc, request_data=request_data, user_data=user_data)
+                    booboo._client._capture_and_send(
+                        exc, request_data=request_data, user_data=user_data
+                    )
                 except Exception:
                     pass
             return _original(request, exc)
@@ -47,10 +50,7 @@ def _extract_django_request(request):
             if hasattr(user, "username") and user.username:
                 user_data["username"] = user.username
         ip = request.META.get("HTTP_X_FORWARDED_FOR")
-        if ip:
-            ip = ip.split(",")[0].strip()
-        else:
-            ip = request.META.get("REMOTE_ADDR")
+        ip = ip.split(",")[0].strip() if ip else request.META.get("REMOTE_ADDR")
         if ip:
             if user_data is None:
                 user_data = {}
@@ -106,7 +106,9 @@ class BoobooDjangoMiddleware:
         except Exception as exc:
             if booboo._client:
                 request_data, user_data = _extract_django_request(request)
-                booboo._client._capture_and_send(exc, request_data=request_data, user_data=user_data)
+                booboo._client._capture_and_send(
+                    exc, request_data=request_data, user_data=user_data
+                )
             raise
 
 
@@ -123,5 +125,7 @@ class BoobooASGIMiddleware:
         except Exception as exc:
             if booboo._client:
                 request_data, user_data = _extract_asgi_request(scope)
-                booboo._client._capture_and_send(exc, request_data=request_data, user_data=user_data)
+                booboo._client._capture_and_send(
+                    exc, request_data=request_data, user_data=user_data
+                )
             raise

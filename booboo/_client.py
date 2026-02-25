@@ -1,12 +1,15 @@
 import atexit
+import contextlib
 import json
 import platform
 import queue
 import sys
 import threading
+
 import requests
-from ._stacktrace import extract_frames, extract_exception_chain
+
 from ._scrubber import scrub_headers
+from ._stacktrace import extract_exception_chain, extract_frames
 
 _SENTINEL = object()
 
@@ -227,10 +230,8 @@ class BoobooClient:
 
         try:
             if self._ensure_worker():
-                try:
+                with contextlib.suppress(queue.Full):
                     self._queue.put_nowait(payload)
-                except queue.Full:
-                    pass
             else:
                 self._do_send(payload)  # sync fallback
         except Exception:

@@ -5,14 +5,16 @@ SENSITIVE_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-SENSITIVE_HEADERS = frozenset({
-    "authorization",
-    "cookie",
-    "set-cookie",
-    "x-forwarded-for",
-    "x-real-ip",
-    "proxy-authorization",
-})
+SENSITIVE_HEADERS = frozenset(
+    {
+        "authorization",
+        "cookie",
+        "set-cookie",
+        "x-forwarded-for",
+        "x-real-ip",
+        "proxy-authorization",
+    }
+)
 
 
 def scrub_headers(headers):

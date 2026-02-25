@@ -1,4 +1,5 @@
 import linecache
+
 from ._scrubber import scrub_vars
 
 CONTEXT_LINES = 5
@@ -23,8 +24,8 @@ def extract_frames(exc):
         all_lines = linecache.getlines(filename)
         start = max(0, lineno - 1 - CONTEXT_LINES)
         end = min(len(all_lines), lineno + CONTEXT_LINES)
-        pre_context = [l.rstrip("\n") for l in all_lines[start : lineno - 1]]
-        post_context = [l.rstrip("\n") for l in all_lines[lineno:end]]
+        pre_context = [line.rstrip("\n") for line in all_lines[start : lineno - 1]]
+        post_context = [line.rstrip("\n") for line in all_lines[lineno:end]]
 
         local_vars = scrub_vars(frame.f_locals)
 
@@ -79,7 +80,9 @@ def extract_exception_chain(exc):
         if current.__cause__ is not None:
             current = current.__cause__
             chain_type = "cause"
-        elif not getattr(current, "__suppress_context__", False) and current.__context__ is not None:
+        elif (
+            not getattr(current, "__suppress_context__", False) and current.__context__ is not None
+        ):
             current = current.__context__
             chain_type = "context"
         else:
