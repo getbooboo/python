@@ -8,7 +8,7 @@ from booboo._client import BoobooClient
 
 @pytest.fixture
 def client():
-    c = BoobooClient("test-dsn-123", "https://example.com/ingest/", environment="testing")
+    c = BoobooClient("test-dsn-123", environment="testing", endpoint="https://example.com/ingest/")
     yield c
     # Drain the queue so the worker thread doesn't leak
     c._flush()
@@ -24,7 +24,7 @@ def test_client_init_stores_config(client):
 
 
 def test_client_default_environment():
-    c = BoobooClient("dsn", "https://example.com/ingest/")
+    c = BoobooClient("dsn", endpoint="https://example.com/ingest/")
     assert c.environment == ""
     c._flush()
 
@@ -209,3 +209,107 @@ def test_capture_exception_none_outside_handler(client):
 
     client.capture_exception(None)
     assert len(payloads) == 0
+
+
+# --- capture_message ---
+
+
+def test_capture_message_payload_shape(client):
+    payloads = []
+    client._do_send = lambda p: payloads.append(p)
+    client._ensure_worker = lambda: False
+
+    client.capture_message("deployment complete")
+
+    assert len(payloads) == 1
+    p = payloads[0]
+    assert p["message"] == "deployment complete"
+    assert p["exception_type"] == ""
+    assert p["level"] == "info"
+    assert p["stacktrace"] == []
+    assert p["exceptions"] == []
+    assert p["environment"] == "testing"
+    assert p["tags"] == {"runtime": "python"}
+    assert "sdk" in p["context"]
+    assert "runtime" in p["context"]
+
+
+def test_capture_message_custom_level(client):
+    payloads = []
+    client._do_send = lambda p: payloads.append(p)
+    client._ensure_worker = lambda: False
+
+    client.capture_message("disk usage high", level="warning")
+
+    assert payloads[0]["level"] == "warning"
+
+
+# --- ignore_errors ---
+
+
+def test_ignore_errors_suppresses_matching_exception():
+    c = BoobooClient("dsn", ignore_errors=[ValueError], endpoint="https://example.com/ingest/")
+    payloads = []
+    c._do_send = lambda p: payloads.append(p)
+    c._ensure_worker = lambda: False
+
+    exc = ValueError("ignored")
+    exc.__traceback__ = None
+    c.capture_exception(exc)
+
+    assert len(payloads) == 0
+    c._flush()
+
+
+def test_ignore_errors_passes_non_matching_exception():
+    c = BoobooClient("dsn", ignore_errors=[ValueError], endpoint="https://example.com/ingest/")
+    payloads = []
+    c._do_send = lambda p: payloads.append(p)
+    c._ensure_worker = lambda: False
+
+    exc = TypeError("not ignored")
+    exc.__traceback__ = None
+    c.capture_exception(exc)
+
+    assert len(payloads) == 1
+    assert payloads[0]["message"] == "not ignored"
+    c._flush()
+
+
+def test_ignore_errors_matches_subclasses():
+    c = BoobooClient("dsn", ignore_errors=[OSError], endpoint="https://example.com/ingest/")
+    payloads = []
+    c._do_send = lambda p: payloads.append(p)
+    c._ensure_worker = lambda: False
+
+    exc = ConnectionError("subclass of OSError")
+    exc.__traceback__ = None
+    c.capture_exception(exc)
+
+    assert len(payloads) == 0
+    c._flush()
+
+
+def test_ignore_errors_empty_list_has_no_effect():
+    c = BoobooClient("dsn", ignore_errors=[], endpoint="https://example.com/ingest/")
+    payloads = []
+    c._do_send = lambda p: payloads.append(p)
+    c._ensure_worker = lambda: False
+
+    exc = ValueError("should pass")
+    exc.__traceback__ = None
+    c.capture_exception(exc)
+
+    assert len(payloads) == 1
+    c._flush()
+
+
+def test_capture_message_includes_user(client):
+    payloads = []
+    client._do_send = lambda p: payloads.append(p)
+    client._ensure_worker = lambda: False
+
+    client.set_user({"id": "42", "email": "test@example.com"})
+    client.capture_message("user action logged")
+
+    assert payloads[0]["context"]["user"] == {"id": "42", "email": "test@example.com"}

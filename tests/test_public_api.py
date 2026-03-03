@@ -67,3 +67,20 @@ def test_set_user_delegates():
 def test_set_user_noop_when_uninitialized():
     # Should not raise
     booboo.set_user({"id": "42"})
+
+
+# --- capture_message delegates ---
+
+
+def test_capture_message_delegates():
+    booboo.init("dsn")
+    calls = []
+    booboo._client.capture_message = lambda msg, level="info": calls.append((msg, level))
+
+    booboo.capture_message("hello")
+    assert calls == [("hello", "info")]
+
+
+def test_capture_message_noop_when_uninitialized():
+    # Should not raise
+    booboo.capture_message("hello")

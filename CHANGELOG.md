@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.10.0 (2026-03-03)
+
+### Features
+
+- **`capture_message()`**: Send plain message events (not tied to an exception) with `booboo.capture_message(message, level)`. Useful for tracking deployments, warnings, or custom events.
+- **`ignore_errors`**: New `ignore_errors` parameter on `booboo.init()` to suppress known exception types from being reported. Uses `isinstance()` matching, so subclasses are automatically caught (e.g. `ignore_errors=[OSError]` also suppresses `ConnectionError`).
+
+### Changed
+
+- **`endpoint` parameter moved to end of argument list** in both `booboo.init()` and `BoobooClient.__init__()`. The default value (`https://api.booboo.dev/ingest/`) is now set directly on both functions. If you were passing `endpoint` as a positional argument, switch to the keyword form: `booboo.init("dsn", endpoint="...")`.
+
 ## 0.9.0 (2026-02-23)
 
 ### Features

@@ -86,17 +86,18 @@ Same auto-detection as Flask if `app` is not passed explicitly.
 ```python
 booboo.init(
     dsn="your-dsn-here",
-    endpoint="https://api.booboo.dev/ingest/",  # default
     environment="production",
+    ignore_errors=[KeyboardInterrupt, ConnectionError],
 )
 ```
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `dsn` | (required) | Your project's DSN from booboo.dev |
-| `endpoint` | `https://api.booboo.dev/ingest/` | Ingestion endpoint URL |
 | `app` | `None` | Flask/FastAPI app instance for explicit registration |
 | `environment` | `""` | Environment name (e.g. `"production"`, `"staging"`). Attached to every event. |
+| `ignore_errors` | `None` | List of exception classes to suppress. Uses `isinstance()` so subclasses are matched. |
+| `endpoint` | `https://api.booboo.dev/ingest/` | Ingestion endpoint URL |
 
 ## Features
 

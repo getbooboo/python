@@ -15,10 +15,13 @@ _SENTINEL = object()
 
 
 class BoobooClient:
-    def __init__(self, dsn, endpoint, environment=""):
+    def __init__(
+        self, dsn, environment="", ignore_errors=None, endpoint="https://api.booboo.dev/ingest/"
+    ):
         self.dsn = dsn
         self.endpoint = endpoint
         self.environment = environment
+        self.ignore_errors = tuple(ignore_errors) if ignore_errors else ()
         self._orig_excepthook = None
         self._queue = queue.Queue(maxsize=100)
         self._worker = None
@@ -185,7 +188,42 @@ class BoobooClient:
         if exc is not None:
             self._capture_and_send(exc)
 
+    def capture_message(self, message, level="info"):
+        """Public API: send a plain message event."""
+        from . import __version__
+
+        context = {
+            "sdk": {"name": "booboo-sdk", "version": __version__},
+            "runtime": {"name": "Python", "version": platform.python_version()},
+        }
+
+        if self._user:
+            context["user"] = dict(self._user)
+
+        payload = {
+            "message": message,
+            "exception_type": "",
+            "level": level,
+            "stacktrace": [],
+            "exceptions": [],
+            "context": context,
+            "tags": {"runtime": "python"},
+            "environment": self.environment,
+        }
+
+        try:
+            if self._ensure_worker():
+                with contextlib.suppress(queue.Full):
+                    self._queue.put_nowait(payload)
+            else:
+                self._do_send(payload)
+        except Exception:
+            pass
+
     def _capture_and_send(self, exc, request_data=None, user_data=None):
+        if self.ignore_errors and isinstance(exc, self.ignore_errors):
+            return
+
         try:
             frames = extract_frames(exc)
         except Exception:
