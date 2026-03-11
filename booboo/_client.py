@@ -55,6 +55,9 @@ class BoobooClient:
         except Exception:
             pass
 
+        # Django Channels: auto-patch ProtocolTypeRouter
+        self._patch_channels_router()
+
         # Flask: explicit app or auto-patch constructor
         if app is not None and self._is_flask(app):
             self._install_flask(app)
@@ -146,6 +149,35 @@ class BoobooClient:
             self_app.add_middleware(BoobooASGIMiddleware)
 
         cls.__init__ = _patched_init
+
+    def _patch_channels_router(self):
+        """Monkey-patch Django Channels ProtocolTypeRouter to capture errors."""
+        try:
+            from channels.routing import ProtocolTypeRouter
+        except ImportError:
+            return
+
+        if getattr(ProtocolTypeRouter, "_booboo_patched", False):
+            return
+
+        client = self
+        _original_call = ProtocolTypeRouter.__call__
+
+        async def _wrapped_call(router_self, scope, receive, send):
+            if scope["type"] == "lifespan":
+                await _original_call(router_self, scope, receive, send)
+                return
+            try:
+                await _original_call(router_self, scope, receive, send)
+            except Exception as exc:
+                from ._middleware import _extract_asgi_request
+
+                request_data, user_data = _extract_asgi_request(scope)
+                client._capture_and_send(exc, request_data=request_data, user_data=user_data)
+                raise
+
+        ProtocolTypeRouter.__call__ = _wrapped_call
+        ProtocolTypeRouter._booboo_patched = True
 
     def _ensure_worker(self):
         """Lazily start the background worker thread. Returns False if thread creation fails."""

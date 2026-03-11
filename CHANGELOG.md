@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.11.0 (2026-03-11)
+
+### Features
+
+- **Django Channels support**: `ProtocolTypeRouter` is automatically patched when `channels` is installed — errors in both HTTP and WebSocket handlers are captured with full request context.
+- **WebSocket error capture**: ASGI middleware now captures errors in WebSocket connections (previously only HTTP requests were handled).
+
 ## 0.10.0 (2026-03-03)
 
 ### Features
