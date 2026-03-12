@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12.0 (2026-03-12)
+
+### Changed
+
+- **404 errors are now filtered by default** in Django and Flask integrations. Use `booboo.capture_exception()` in a custom 404 handler if you still want to track them.
+
 ## 0.11.0 (2026-03-11)
 
 ### Features

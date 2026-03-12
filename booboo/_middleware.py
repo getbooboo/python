@@ -15,10 +15,13 @@ def _patch_django_exception_handler():
         def _patched_response_for_exception(request, exc):
             if booboo._client:
                 try:
-                    request_data, user_data = _extract_django_request(request)
-                    booboo._client._capture_and_send(
-                        exc, request_data=request_data, user_data=user_data
-                    )
+                    from django.http import Http404
+
+                    if not isinstance(exc, Http404):
+                        request_data, user_data = _extract_django_request(request)
+                        booboo._client._capture_and_send(
+                            exc, request_data=request_data, user_data=user_data
+                        )
                 except Exception:
                     pass
             return _original(request, exc)

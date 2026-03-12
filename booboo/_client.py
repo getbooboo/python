@@ -101,6 +101,13 @@ class BoobooClient:
 
         @app.errorhandler(Exception)
         def _booboo_flask_handler(exc):
+            try:
+                from werkzeug.exceptions import NotFound
+
+                if isinstance(exc, NotFound):
+                    raise
+            except ImportError:
+                pass
             request_data = None
             user_data = None
             try:

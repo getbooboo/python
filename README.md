@@ -55,7 +55,7 @@ booboo.set_user({
 
 ### Django
 
-Auto-detected — no extra setup needed. The SDK injects middleware and patches Django's internal exception handler to capture errors that never reach middleware (like `DisallowedHost`).
+Auto-detected — no extra setup needed. The SDK injects middleware and patches Django's internal exception handler to capture errors that never reach middleware (like `DisallowedHost`). 404 errors are filtered by default.
 
 ### Flask
 
@@ -67,7 +67,7 @@ app = Flask(__name__)
 booboo.init("your-dsn-here", app=app)
 ```
 
-Or without passing `app` — the SDK monkey-patches `Flask.__init__` to auto-register on any Flask app created after `init()`.
+Or without passing `app` — the SDK monkey-patches `Flask.__init__` to auto-register on any Flask app created after `init()`. 404 errors are filtered by default.
 
 ### FastAPI
 
