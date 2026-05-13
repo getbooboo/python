@@ -18,10 +18,12 @@ pip install booboo-sdk
 ```python
 import booboo
 
-booboo.init("your-dsn-here")
+booboo.init("https://YOUR_TOKEN@ingest.booboo.dev/your-org/your-project")
 ```
 
 That's it. Unhandled exceptions are automatically captured and sent to booboo.dev.
+
+The DSN is a URL — the SDK parses out the ingest host so you don't need to configure an endpoint separately. Bare tokens (e.g. `"abc123..."`) are also accepted for back-compat with older dashboards.
 
 ## Manual Capture
 
@@ -64,7 +66,7 @@ from flask import Flask
 import booboo
 
 app = Flask(__name__)
-booboo.init("your-dsn-here", app=app)
+booboo.init("https://YOUR_TOKEN@ingest.booboo.dev/your-org/your-project", app=app)
 ```
 
 Or without passing `app` — the SDK monkey-patches `Flask.__init__` to auto-register on any Flask app created after `init()`. 404 errors are filtered by default.
@@ -76,7 +78,7 @@ from fastapi import FastAPI
 import booboo
 
 app = FastAPI()
-booboo.init("your-dsn-here", app=app)
+booboo.init("https://YOUR_TOKEN@ingest.booboo.dev/your-org/your-project", app=app)
 ```
 
 Same auto-detection as Flask if `app` is not passed explicitly.
@@ -85,7 +87,7 @@ Same auto-detection as Flask if `app` is not passed explicitly.
 
 ```python
 booboo.init(
-    dsn="your-dsn-here",
+    dsn="https://YOUR_TOKEN@ingest.booboo.dev/your-org/your-project",
     environment="production",
     ignore_errors=[KeyboardInterrupt, ConnectionError],
 )
@@ -97,7 +99,7 @@ booboo.init(
 | `app` | `None` | Flask/FastAPI app instance for explicit registration |
 | `environment` | `""` | Environment name (e.g. `"production"`, `"staging"`). Attached to every event. |
 | `ignore_errors` | `None` | List of exception classes to suppress. Uses `isinstance()` so subclasses are matched. |
-| `endpoint` | `https://api.booboo.dev/ingest/` | Ingestion endpoint URL |
+| `endpoint` | derived from DSN URL, or `https://ingest.booboo.dev/` | Override the ingest endpoint. Normally unnecessary — the SDK derives it from the DSN URL automatically. |
 
 ## Features
 
