@@ -5,9 +5,7 @@ __version__ = "0.13.0"
 _client = None
 
 
-def init(
-    dsn, app=None, environment="", ignore_errors=None, endpoint=None
-):
+def init(dsn, app=None, environment="", ignore_errors=None, endpoint=None):
     """Initialize booboo error tracking.
 
     ``dsn`` accepts either a bare token (``"abc123..."``) or a URL-style DSN

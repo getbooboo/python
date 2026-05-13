@@ -34,9 +34,7 @@ def _parse_dsn(dsn):
 
 
 class BoobooClient:
-    def __init__(
-        self, dsn, environment="", ignore_errors=None, endpoint=None
-    ):
+    def __init__(self, dsn, environment="", ignore_errors=None, endpoint=None):
         token, derived_endpoint = _parse_dsn(dsn)
         self.dsn = token
         self.endpoint = endpoint or derived_endpoint or DEFAULT_ENDPOINT
