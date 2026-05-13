@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.13.0 (2026-05-13)
+
+### Features
+
+- **URL-style DSNs**: `booboo.init(dsn)` now accepts both bare tokens and URL DSNs (e.g. `https://TOKEN@ingest.booboo.dev/your-org/your-project`). The SDK parses the URL to derive the ingest endpoint and sends only the token in the `X-Booboo-DSN` header — no need to pass `endpoint=` separately. Bare-token DSNs continue to work unchanged.
+
+### Changed
+
+- **Default ingest endpoint is now `https://ingest.booboo.dev/`** (previously `https://api.booboo.dev/ingest/`). Existing installs that pass `endpoint=` explicitly are unaffected. `api.booboo.dev/ingest/` continues to accept events from older SDK versions.
+
 ## 0.12.0 (2026-03-12)
 
 ### Changed

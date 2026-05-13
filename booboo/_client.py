@@ -5,6 +5,7 @@ import platform
 import queue
 import sys
 import threading
+from urllib.parse import urlparse
 
 import requests
 
@@ -12,14 +13,33 @@ from ._scrubber import scrub_headers
 from ._stacktrace import extract_exception_chain, extract_frames
 
 _SENTINEL = object()
+DEFAULT_ENDPOINT = "https://ingest.booboo.dev/"
+
+
+def _parse_dsn(dsn):
+    """Return (token, endpoint_or_None).
+
+    Accepts both bare tokens and URL-style DSNs like
+    ``https://TOKEN@host[/path]``. The path is decorative — only the
+    scheme + host are used to derive the ingest endpoint.
+    """
+    if isinstance(dsn, str) and dsn.startswith(("http://", "https://")):
+        parsed = urlparse(dsn)
+        if parsed.username and parsed.hostname:
+            host = parsed.hostname
+            if parsed.port:
+                host = f"{host}:{parsed.port}"
+            return parsed.username, f"{parsed.scheme}://{host}/"
+    return dsn, None
 
 
 class BoobooClient:
     def __init__(
-        self, dsn, environment="", ignore_errors=None, endpoint="https://api.booboo.dev/ingest/"
+        self, dsn, environment="", ignore_errors=None, endpoint=None
     ):
-        self.dsn = dsn
-        self.endpoint = endpoint
+        token, derived_endpoint = _parse_dsn(dsn)
+        self.dsn = token
+        self.endpoint = endpoint or derived_endpoint or DEFAULT_ENDPOINT
         self.environment = environment
         self.ignore_errors = tuple(ignore_errors) if ignore_errors else ()
         self._orig_excepthook = None

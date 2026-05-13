@@ -1,14 +1,19 @@
 from ._client import BoobooClient
 
-__version__ = "0.12.0"
+__version__ = "0.13.0"
 
 _client = None
 
 
 def init(
-    dsn, app=None, environment="", ignore_errors=None, endpoint="https://api.booboo.dev/ingest/"
+    dsn, app=None, environment="", ignore_errors=None, endpoint=None
 ):
     """Initialize booboo error tracking.
+
+    ``dsn`` accepts either a bare token (``"abc123..."``) or a URL-style DSN
+    (``"https://abc123...@ingest.booboo.dev/org-slug/project-slug"``). With a
+    URL DSN, the ingest endpoint is derived from the URL automatically; pass
+    ``endpoint=`` only to override.
 
     Always hooks sys.excepthook. Auto-detects Django, Flask, and FastAPI.
     Pass app= to explicitly register with a specific app instance.
